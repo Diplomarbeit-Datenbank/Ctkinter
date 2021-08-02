@@ -5,7 +5,7 @@ Eine zusätzliche Library für tkinter, die es ermöglicht abgerundete und Runde
 
 
 
-#Elemente:
+# Elemente:
 
 ## CCanvas:
 ### Aussehen:
