@@ -4,6 +4,21 @@
 Eine zusätzliche Library für tkinter, die es ermöglicht abgerundete und Runde Objekte zu erstellen
 
 
+# Benötigte Lbrarys
+    o PILLOW:    -> Für die Darstellungen der Bilder und GIF animationen am CCanvas
+                 -> pip install PILLOW
+    o inspect:   -> Für die präzise angabe von Warnungen und Errors in der Library
+                 -> pip install inspect
+    o termcolor: -> Für angaben der Warnungen in gelb auf der Konsole und rot für die Fehler
+                 -> pip install termcolor
+    o numpy:     -> Für Bildbearbeitung und zuschneidung
+                 -> pip install numpy
+    o imageio:   -> Für das lesen von tranceparenten GIF Bildern
+                 -> pip install imageio
+    o opencv:    -> Für Bildbearbeitung und Darstellung auf den Ctkinter Objekten
+                 -> pip install opencv-python
+
+
 
 # Elemente:
 
