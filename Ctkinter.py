@@ -941,7 +941,8 @@ class TextAnimation:
 
     """
 
-    def __init__(self, master, bg, size, text, font, fg, label_place=(10, 5)):
+    def __init__(self, master, bg, size, text, font, fg, label_place=(10, 5), text_space='default', 
+                 test_delay=0):
         """
 
         :param master:      master for the animated text widget
@@ -954,48 +955,56 @@ class TextAnimation:
                             the given master!
         """
         self.label_place_y = label_place[1]
-        self.text = text
+        space = int(size[0] / 5.6)
+        if text_space == 'default':
+            self.text = text + int(size[0] / 5.6) * ' ' + text
+        else:
+            self.text = text + text_space * ' ' + text
+            space = text_space
+
         self.size = size
         self.run = False
         self.text_pos_x = 0
 
         self.animated_text = tk.Frame(master=master, bg=bg, width=size[0], height=size[1])
-        self._text_label = tk.Label(self.animated_text, text=text, bg=bg, font=font, fg=fg)
+        self._text_label = tk.Label(self.animated_text, text=self.text, bg=bg, font=font, fg=fg)
 
         self._text_label.place(x=label_place[0], y=label_place[1])
         self._text_label.update()
         text_width = self._text_label.winfo_width()
+        self.animation_len_in_px = ((text_width - text_space) / 2) + test_delay
         self.animated_text.bind('<Enter>', lambda event: self._start_animation(text_width))
-        self.animated_text.bind('<Leave>', lambda event: self._stop_animation())
 
-    def _stop_animation(self):
+    def _stop_animation(self, text_width):
         """
             -> Stop the animated text widget and set the text to start value (0px)
 
         """
         self.run = False
-        time.sleep(0.005)
+        self.text_pos_x = 10
+        self._change_x_position(text_width)
+        self.animated_text.bind('<Enter>', lambda event: self._start_animation(text_width))
 
     def _run_text_animation(self, text_width):
         """
 
         :param text_width: width of the text widget
         """
-        self.run = True
-        while self.run is True:
-            self._change_x_position(text_width)
-            time.sleep(0.005)
-
-        self.text_pos_x = 0
         self._change_x_position(text_width)
+        if -1 * self.text_pos_x >= self.animation_len_in_px:
+            self._stop_animation(text_width)
+
+        if self.run is True:
+            self.animated_text.after(10, lambda: self._run_text_animation(text_width=text_width))
 
     def _start_animation(self, text_width):
         """
 
         :param text_width: width of the text widget
         """
-        th = threading.Thread(target=self._run_text_animation, args=(text_width,))
-        th.start()
+        self.run = True
+        self.animated_text.unbind('<Enter>')
+        self.animated_text.after(10, lambda: self._run_text_animation(text_width=text_width))
 
     def _change_x_position(self, text_width):
         """
@@ -1016,10 +1025,11 @@ def main():
     """
     root = tk.Tk()
     root.title('Test Animated Text')
-    root.geometry('400x200')
+    root.geometry('450x200')
 
-    text = TextAnimation(root, 'gray', (300, 40), text='Hallo Welt', font=('Helvetica', 15),
-                         fg='white', label_place=(10, 7))
+    text = TextAnimation(root, 'gray', (400, 40), text='Masked Wolf Astronaut in the ocean lyrics', 
+                         font=('Helvetica', 15),
+                         fg='white', label_place=(10, 7), text_space=40, test_delay=130)
     text.animated_text.place(x=20, y=20)
 
     root.mainloop()
