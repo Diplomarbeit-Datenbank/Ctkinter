@@ -283,6 +283,17 @@ class CButton:
         """
         self.CButton.place(x=x, y=y)
 
+    def grid(self, row, column, pady, padx):
+        """
+        
+        :param row: 
+        :param column: 
+        :param pady: 
+        :param padx: 
+        :return: 
+        """
+        self.CButton.grid(row=row, column=column, pady=pady, padx=padx)
+
     def destroy(self):
         """
 
@@ -677,7 +688,7 @@ class CCanvas:
     def create_gif(self, gif_path, corner, size, pos, transparent=False, set_half_gif_time=False, speed='normal'):
         """
 
-        :param speed: 
+        :param speed:
         :param transparent:
         :param set_half_gif_time: set the gif time to half
         :param gif_path: path of the gif in storage
@@ -812,6 +823,7 @@ class CLabel:
 
         self.text = text
         self.font = font
+        self.text_widget = None
         self.variable_text_widget = None
         change_size = False
 
@@ -828,11 +840,13 @@ class CLabel:
         if text is not None:
             if variable_text is False:
                 if anchor == 'NW':
-                    self.CLabel.create_text(text_place[0], text_place[1], text=text, anchor=tk.NW, font=font, fill=fg)
+                    self.text_widget = self.CLabel.get_canvas().create_text(text_place[0], text_place[1], text=text,
+                                                               anchor=tk.NW, font=font, fill=fg)
 
                 else:
-                    self.CLabel.create_text(int(size[0] / 2), int(size[1] / 2), text=text, anchor=tk.CENTER, font=font,
-                                            fill=fg)
+                    self.text_widget = self.CLabel.get_canvas().create_text(int(size[0] / 2), int(size[1] / 2),
+                                                                            text=text, anchor=tk.CENTER, font=font,
+                                                                            fill=fg)
             else:
                 self._create_variable_text(fg, size, bg, text, enter_hit)
 
@@ -884,6 +898,9 @@ class CLabel:
             self.CLabel.config(bg=kwargs.get('bg'))
             if self.variable_text_widget is not None:
                 self.variable_text_widget.config(bg=kwargs.get('bg'))
+
+        if list(kwargs.keys())[0] == 'fg':
+            self.CLabel.get_canvas().itemconfig(self.text_widget, fill=kwargs.get('fg'))
 
     def get_text_len_in_px(self):
         """
@@ -941,7 +958,7 @@ class TextAnimation:
 
     """
 
-    def __init__(self, master, bg, size, text, font, fg, label_place=(10, 5), text_space='default', 
+    def __init__(self, master, bg, size, text, font, fg, label_place=(10, 5), text_space=None,
                  test_delay=0):
         """
 
@@ -955,56 +972,66 @@ class TextAnimation:
                             the given master!
         """
         self.label_place_y = label_place[1]
-        space = int(size[0] / 5.6)
-        if text_space == 'default':
+        self.text_space = text_space
+        if text_space is None:
             self.text = text + int(size[0] / 5.6) * ' ' + text
+            one_text = text + int(size[0] / 5.6) * ' '
         else:
-            self.text = text + text_space * ' ' + text
-            space = text_space
+            self.text = text + int(text_space) * ' ' + text
+            one_text = text + int(text_space) * ' '
 
         self.size = size
         self.run = False
         self.text_pos_x = 0
 
         self.animated_text = tk.Frame(master=master, bg=bg, width=size[0], height=size[1])
-        self._text_label = tk.Label(self.animated_text, text=self.text, bg=bg, font=font, fg=fg)
+        self._text_label = tk.Label(self.animated_text, text=one_text, bg=bg, font=font, fg=fg)
 
         self._text_label.place(x=label_place[0], y=label_place[1])
         self._text_label.update()
         text_width = self._text_label.winfo_width()
-        self.animation_len_in_px = ((text_width - text_space) / 2) + test_delay
-        self.animated_text.bind('<Enter>', lambda event: self._start_animation(text_width))
+        self.animation_len_in_px = text_width - 13  # there could be some issiue (nobody knows)
+        self._text_label.config(text=self.text)
+        self._text_label.update()
+        self.text_width = self._text_label.winfo_width()
 
-    def _stop_animation(self, text_width):
+        self.animated_text.bind('<Enter>', lambda event: self._start_animation())
+
+    def _stop_animation(self):
         """
             -> Stop the animated text widget and set the text to start value (0px)
 
         """
         self.run = False
         self.text_pos_x = 10
-        self._change_x_position(text_width)
-        self.animated_text.bind('<Enter>', lambda event: self._start_animation(text_width))
+        self._change_x_position(self.text_width)
+        self.animated_text.bind('<Enter>', lambda event: self._start_animation())
 
-    def _run_text_animation(self, text_width):
+    def _run_text_animation(self):
         """
 
         :param text_width: width of the text widget
         """
-        self._change_x_position(text_width)
+        self._change_x_position(self.text_width)
         if -1 * self.text_pos_x >= self.animation_len_in_px:
-            self._stop_animation(text_width)
+            self._stop_animation()
 
         if self.run is True:
-            self.animated_text.after(10, lambda: self._run_text_animation(text_width=text_width))
+            self.animated_text.after(15, lambda: self._run_text_animation())
 
-    def _start_animation(self, text_width):
+    def _start_animation(self):
         """
 
         :param text_width: width of the text widget
         """
         self.run = True
         self.animated_text.unbind('<Enter>')
-        self.animated_text.after(10, lambda: self._run_text_animation(text_width=text_width))
+        self.animated_text.after(15, lambda: self._run_text_animation())
+    
+    def manual_start(self):
+        self.run = False
+        self.text_pos_x = 10
+        self.animated_text.after(200, self._start_animation)
 
     def _change_x_position(self, text_width):
         """
@@ -1016,23 +1043,95 @@ class TextAnimation:
             self.text_pos_x -= 1
         else:
             self.text_pos_x = self.size[0]
+    
+    def change_text(self, text):
+        if self.text_space is None:
+            self.text = text + int(size[0] / 5.6) * ' ' + text
+            one_text = text + int(size[0] / 5.6) * ' '
+        else:
+            self.text = text + int(self.text_space) * ' ' + text
+            one_text = text + int(self.text_space) * ' '
+
+        self._text_label.config(text=one_text)
+        self._text_label.update()
+        text_width = self._text_label.winfo_width()
+        self.animation_len_in_px = text_width - 13  # there could be some issiue (nobody knows)
+        self._text_label.config(text=self.text)
+        self._text_label.update()
+        self.text_width = self._text_label.winfo_width()
+
+
+
+class CScrollWidget:
+    def __init__(self, master, width, height, bg):
+        self.ScrollWidget = tk.Frame(master=master, bg=bg, bd=-2)
+
+        # create a Canvas
+        self.background_canvas = tk.Canvas(self.ScrollWidget, bg=bg, bd=-2, width=width, height=height)
+        self.background_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+        # Configure the Canvas
+        self.background_canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.background_canvas.bind('<Configure>',
+                                    lambda e:
+                                    self.background_canvas.configure(scrollregion=self.background_canvas.bbox("all")))
+
+        # Create another Frame inside the Canvas
+        self.second_frame = tk.Frame(self.background_canvas, bg=bg, bd=-2)
+
+        # Add the new Frame to a Window in the Canvas
+        self.background_canvas.create_window((0, 0), window=self.second_frame, anchor='nw')
+
+    def get_master_for_placing_objects(self):
+        return self.second_frame
+
+    def _on_mousewheel(self, event):
+        # print(int(-1*(event.delta/120)))
+        self.background_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def place(self, x, y):
+        self.ScrollWidget.place(x=x, y=y)
 
 
 def main():
-    """
+    def test1():
+        """
 
-        -> Test the Text Animation Class
-    """
-    root = tk.Tk()
-    root.title('Test Animated Text')
-    root.geometry('450x200')
+            -> Test the Text Animation Class
+        """
+        root = tk.Tk()
+        root.title('Test Animated Text')
+        root.geometry('450x200')
 
-    text = TextAnimation(root, 'gray', (400, 40), text='Masked Wolf Astronaut in the ocean lyrics', 
-                         font=('Helvetica', 15),
-                         fg='white', label_place=(10, 7), text_space=40, test_delay=130)
-    text.animated_text.place(x=20, y=20)
+        background_canvas = tk.Canvas(root, bg='blue')
+        background_canvas.pack(fill=tk.BOTH)
 
-    root.mainloop()
+        text = TextAnimation(background_canvas, 'gray', (400, 40), text='Masked Wolf Astronaut in the ocean lyrics',
+                             font=('Helvetica', 15),
+                             fg='white', label_place=(10, 7), text_space=40, test_delay=130)
+        text.animated_text.place(x=20, y=20)
+
+        root.mainloop()
+
+    def test2():
+        """
+
+            -> Test the Text Animation Class
+        """
+        root = tk.Tk()
+        root.title('ScrollWidget Text')
+        root.geometry('600x300')
+
+        widget = CScrollWidget(root, 400, 200, 'blue')
+        widget.place(x=100, y=50)
+
+        for thing in range(100):
+            tk.Button(widget.get_master_for_placing_objects(),
+                      text=f'Button {thing} Yo!').grid(row=thing, column=0, padx=10, pady=0)
+
+        root.mainloop()
+
+    test2()
 
 
 if __name__ == '__main__':
