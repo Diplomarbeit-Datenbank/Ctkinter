@@ -5,15 +5,15 @@ Eine zusätzliche Library für tkinter, die es ermöglicht abgerundete und Runde
 
 
 # Benötigte Lbrarys
-    o PILLOW:    -> Für die Darstellungen der Bilder und GIF animationen am CCanvas
+    o PILLOW:    -> Für die Darstellungen der Bilder und GIF Animationen am CCanvas
                  -> pip install PILLOW
-    o inspect:   -> Für die präzise angabe von Warnungen und Errors in der Library
+    o inspect:   -> Für die präzise Angabe von Warnungen und Errors in der Library
                  -> pip install inspect
     o termcolor: -> Für angaben der Warnungen in gelb auf der Konsole und rot für die Fehler
                  -> pip install termcolor
-    o numpy:     -> Für Bildbearbeitung und zuschneidung
+    o numpy:     -> Für Bildbearbeitung und Zuschneidung
                  -> pip install numpy
-    o imageio:   -> Für das lesen von tranceparenten GIF Bildern
+    o imageio:   -> Für das lesen von transparenten GIF Bildern
                  -> pip install imageio
     o opencv:    -> Für Bildbearbeitung und Darstellung auf den Ctkinter Objekten
                  -> pip install opencv-python
@@ -35,20 +35,20 @@ tkinter Canvas mit Ecken je nach Wunsch?!?
                                  -> get_canvas()
                                  -> change_outline()
                                  
-    o Mit der crate_image() Funktion ist es möglich ein gewöhnliches jpeg oder png auch mit tranceparenten Hintergrund
+    o Mit der crate_image() Funktion ist es möglich ein gewöhnliches jpeg oder png auch mit transparenten Hintergrund
       am Canvas zu platzieren.
     o Mit der create_gif() Funktion kann ganz einfach ein gif am Canvas platziert werden.
       -> Da das Fenster beim verschieben hängen würde, wenn sich der GIF andauert bewegt, 
-         wurde hier als lösung die Maus verwendet. Fährt man mit der Computer Maus über
+         wurde hier als Lösung die Maus verwendet. Fährt man mit der Computer Maus über
          den GIF fängt dieser sofort an sich abzuspielen.
          -> Alle Probleme gelöst, da nur eine Computer Maus verfügbar ist kann die Maus nicht 
             gleichzeitig den GIF im Focus haben und dabei auch noch das Fenster verschieben
-     o Die get_canvas() Fuktion ist dazu da, das eigentlich tkinter Canvas, welches sich im 
-       Hintergrund des Ctkinter CCanvas befinded zurückgeliefert zu bekommen.
-     o die change_outline() Funktion ist dazu da, die Aussenlinie des CCanvas zu verändern
+     o Die get_canvas() Funktion ist dazu da, das eigentlich tkinter Canvas, welches sich im 
+       Hintergrund des Ctkinter CCanvas befindet zurückgeliefert zu bekommen.
+     o die change_outline() Funktion ist dazu da, die Außenlinie des CCanvas zu verändern
 
 ### Anmerkungen:
-    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach aufruf der Funktione get_canvas()
+    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach Aufruf der Funktionen get_canvas()
        Example: c = CCanvas()
                 c.get_canvas().destroy()
                 
@@ -66,14 +66,14 @@ tkinter Button mit Ecken je nach Wunsch?!?
                                                -> get_canvas()
                                                -> param: image
                                                
-    o Mit der set_button_atributes() Funktion ist es möglich Atribute eines anderen Ctkinter oder tkinter 
+    o Mit der set_button_atributes() Funktion ist es möglich Attribute eines anderen Ctkinter oder tkinter 
       Objekts an den CButton zu übertragen
     o Die get_canvas() Fuktion ist dazu da, das eigentlich tkinter Canvas, welches sich im 
        Hintergrund des Ctkinter CCanvas befinded zurückgeliefert zu bekommen. 
     o Mit dem image Parameter ist es ganz einfach möglich ein Bild am CButton darzustellen
 
 ### Anmerkungen:
-    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach aufruf der Funktione get_canvas()
+    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach Aufruf der Funktion get_canvas()
        Example: c = CButton()
                 c.get_canvas().destroy()
 
@@ -92,17 +92,17 @@ tkinter Label mit Ecken je nach Wunsch?!?
                                                -> get_canvas()
                                                -> get_len_text_in_px()
                                                
-    o Mit der Funktion create_varibale_text() Funktion ist es möglicht Text am Ctkinter Cabel
+    o Mit der Funktion create_varibale_text() Funktion ist es möglich Text am Ctkinter Cabel
       darzustellen, welcher sich durch drauf drücken einfach durch den Benutzer verändern lässt
       -> Durch Enter drücken wird der neue Text eingelesen und eine vom Programmierer vorgegebene Funktion
          ausgeführt.
     o Die get_canvas() Fuktion ist dazu da, das eigentlich tkinter Canvas, welches sich im 
-       Hintergrund des Ctkinter CCanvas befinded zurückgeliefert zu bekommen. 
+       Hintergrund des Ctkinter CCanvas befindet zurückgeliefert zu bekommen. 
     
     o Mit get_len_text_in_px() kann der Programmierer die genaue länge des Textes am Label anfordern
 
 ### Anmerkungen:
-    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach aufruf der Funktione get_canvas()
+    -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach Aufruf der Funktion get_canvas()
        Example: c = CCanvas()
                 c.get_canvas().destroy()
      
