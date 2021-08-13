@@ -105,4 +105,16 @@ tkinter Label mit Ecken je nach Wunsch?!?
     -> Einige Funktionen der tkinter Library werden erst vorgeschlagen nach Aufruf der Funktion get_canvas()
        Example: c = CCanvas()
                 c.get_canvas().destroy()
+
+# Entwickler Verwendung:
+    -> Um einen Eingblick in die Library und ihre vielseitigen Funktionen zu erhalten einfach die obigen Testprogramme ausführen
+    
+# Eigenschaften:
+    o Copyright von Christof Haidegger
+    o Erstellt von Christof Haidegger
+    o Debugging von Christof Haidegger
+    
+    o Geschriebene Zeilen in Python-Code: 1139
+    o Geschriebene Zeilen in README-Code: 121
+    
      
