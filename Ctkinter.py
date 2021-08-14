@@ -823,6 +823,7 @@ class CLabel:
 
         self.text = text
         self.font = font
+        self.text_place = text_place
         self.text_widget = None
         self.variable_text_widget = None
         change_size = False
@@ -864,7 +865,7 @@ class CLabel:
                                              bg=bg, insertbackground='black', bd=0, fg=fg)
 
         self.variable_text_widget.insert(tk.END, text)
-        self.variable_text_widget.place(x=10, y=12)
+        self.variable_text_widget.place(x=self.text_place[0], y=self.text_place[1])
 
         if set_enter_hit[0] is not False:
             self.variable_text_widget.bind('<Return>',
