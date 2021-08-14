@@ -617,7 +617,11 @@ class CCanvas:
         :param pos:    position of the image
         :                 -> run the animation
         """
-        frame = self.gif.get_data(self.image_counter)
+        try:
+            frame = self.gif.get_data(self.image_counter)
+        except IndexError:
+            print('Index Error occurent')
+            return 
         ret = True
         if ret is True:
             if self.image_counter != 0:
@@ -941,7 +945,9 @@ class CLabel:
         :return: destroy the CLabel and the background tkinter Canvas
         """
         self.CLabel.destroy()
-
+    
+    def get(self):
+        return self.variable_text_widget.get()
 
 class TextAnimation:
     """
