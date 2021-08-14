@@ -867,7 +867,6 @@ class CLabel:
 
         self.variable_text_widget = tk.Entry(self.CLabel.get_canvas(), width=int((size[0] / 10) - 14), font=self.font,
                                              bg=bg, insertbackground='black', bd=0, fg=fg)
-
         self.variable_text_widget.insert(tk.END, text)
         self.variable_text_widget.place(x=self.text_place[0], y=self.text_place[1])
 
@@ -885,6 +884,15 @@ class CLabel:
         """
         self.CLabel.get_canvas().focus_set()
         func(variable_text)
+    
+    def insert(self, text):
+        self.variable_text_widget.insert(tk.END, text)
+
+    def disable(self):
+        self.variable_text_widget.config(state='disabled')
+
+    def enable(self):
+        self.variable_text_widget.config(state='enable')
 
     def get_canvas(self):
         """
