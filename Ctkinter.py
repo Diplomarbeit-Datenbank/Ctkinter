@@ -597,6 +597,11 @@ class CCanvas:
         pil_array = _Image.fromarray(rgb_image)
         self._tk_image = ImageTk.PhotoImage(image=pil_array)
         self._tk_image_list.append(self._tk_image)
+        
+        try:
+            self.Canvas.delete(self._canvas_image_list[len(self._canvas_image_list) - 1])
+        except IndexError:
+            pass
         canvas_image = self.Canvas.create_image((pos[0], pos[1]),
                                                 image=self._tk_image_list[len(self._tk_image_list) - 1])
         self._canvas_image_list.append(canvas_image)
@@ -624,17 +629,6 @@ class CCanvas:
             return 
         ret = True
         if ret is True:
-            if self.image_counter != 0:
-                if len(self._canvas_image_list) > 1:
-                    try:
-                        self.Canvas.delete(self._canvas_image_list[len(self._canvas_image_list) - 2])
-                    except _tkinter.TclError:
-                        print(colored('[Ctkinter: Error: ' + str(type(self).warning_counter) + ' in Line: ' +
-                                      str(get_line_number()) + '] image to destroy wos not found raise execution',
-                                      'red'))
-
-                        type(self).warning_counter += 1
-
             frame = cv2.resize(frame, size)
             self.create_image(corner, size[0], size[1], pos, frame, transparent=transparent,
                               read_from_path=False)
