@@ -230,6 +230,7 @@ class CButton:
 
         self.params = {"background": bg, "CObject": self.CButton}
 
+
     def __getitem__(self, item):
         """
 
@@ -310,7 +311,8 @@ class CButton:
         if not leave:
             self.CButton.itemconfig(self.polygon, fill=self.change_color)
             for handler, item in self.color_conf_list:
-                handler.itemconfig(item, fill=self.change_color)
+                if item is not None:
+                    handler.itemconfig(item, fill=self.change_color)
                 handler.config(bg=self.change_color)
 
             # vlt fia die Katz bitte nachschauen
@@ -322,7 +324,8 @@ class CButton:
             else:
                 self.CButton.itemconfig(self.polygon, fill=self.change_color)
             for handler, item in self.color_conf_list:
-                handler.itemconfig(item, fill=self.bg)
+                if item is not None:
+                    handler.itemconfig(item, fill=self.bg)
                 handler.config(bg=self.bg)
 
             # vlt fia die Katz bitte nachschauen
@@ -338,10 +341,13 @@ class CButton:
         self.CButton.bind('<Leave>', lambda a: self._change_color(True))
 
     def _set_func(self):
-        self.CButton.itemconfig(self.polygon, fill=self.pressing_color)
+        if self.pressing_color is not None:
+            self.CButton.itemconfig(self.polygon, fill=self.pressing_color)
         for handler, item in self.color_conf_list:
-            handler.itemconfig(item, fill=self.pressing_color)
-            handler.config(bg=self.pressing_color)
+            if item is not None and self.pressing_color is not None:
+                handler.itemconfig(item, fill=self.pressing_color)
+            if self.pressing_color is not None:
+                handler.config(bg=self.pressing_color)
 
         # vlt fia die Katz bitte nachschauen
         if self.image is not None:
@@ -356,7 +362,8 @@ class CButton:
         """
         self.CButton.itemconfig(self.polygon, fill=self.change_color)
         for handler, item in self.color_conf_list:
-            handler.itemconfig(item, fill=self.change_color)
+            if item is not None:
+                handler.itemconfig(item, fill=self.change_color)
             handler.config(bg=self.change_color)
 
         # vlt fia die Katz bitte nachschauen
@@ -552,6 +559,15 @@ class CCanvas:
         """
         self.Canvas.pack(*args, **kwargs)
 
+    def grid(self, *args, **kwargs):
+        """
+
+        :param args:   args from tkinter library
+        :param kwargs: kwargs from tkinter library
+        :                -> pack the Canvas on the master
+        """
+        self.Canvas.grid(*args, **kwargs)
+
     def create_image(self, corner, width, height, pos, image_path, transparent=False, read_from_path=True):
         """
 
@@ -695,12 +711,16 @@ class CCanvas:
         :param pos:      position of the gif
         :                   -> set a gif image on the canvas
         """
+        if self.gif is not None:
+            self.gif.close()
+            self.image_counter = 0
         try:
             self.gif = imageio.get_reader(gif_path)
         except FileNotFoundError:
-            raise FileNotFoundError('Gif does not exist')
+            raise FileNotFoundError('Gif does not exist, PATH: ', gif_path)
         gif_data = cv2.VideoCapture(gif_path)
         gif_len = gif_data.get(7)
+        gif_data.release()
         large = False
         if self.gif.get_length() > 300:
             large = True
@@ -805,7 +825,7 @@ class CLabel:
 
     def __init__(self, master, bg='white', size=(100, 20), text=None, fg='black', font=('Sans', 12),
                  corner='rounded', max_rad=None, outline=('', 0), anchor='NW', variable_text=False,
-                 enter_hit=(False, None), text_place=(10, 10)):
+                 enter_hit=(False, None), text_place=(10, 10), text_width=None):
         """
 
         :param master:         master, where the Label should be placed
@@ -847,9 +867,12 @@ class CLabel:
                                                                             text=text, anchor=tk.CENTER, font=font,
                                                                             fill=fg)
             else:
-                self._create_variable_text(fg, size, bg, text, enter_hit)
+                if text_width is not None:
+                    self._create_variable_text(fg, size, bg, text, enter_hit, text_width)
+                else:
+                    self._create_variable_text(fg, size, bg, text, enter_hit)
 
-    def _create_variable_text(self, fg, size, bg, text, set_enter_hit=(False, None)):
+    def _create_variable_text(self, fg, size, bg, text, set_enter_hit=(False, None), width=None):
         """
 
         :param size:          size of the variable text
@@ -858,8 +881,11 @@ class CLabel:
         :param set_enter_hit: if a event raises when enter (return) is hit
         :return:              create the changeable text widget on the label
         """
+        
+        if width is None:
+            width = int((size[0] / 10) - 14)
 
-        self.variable_text_widget = tk.Entry(self.CLabel.get_canvas(), width=int((size[0] / 10) - 14), font=self.font,
+        self.variable_text_widget = tk.Entry(self.CLabel.get_canvas(), width=width, font=self.font,
                                              bg=bg, insertbackground='black', bd=0, fg=fg)
         self.variable_text_widget.insert(tk.END, text)
         self.variable_text_widget.place(x=self.text_place[0], y=self.text_place[1])
@@ -1006,6 +1032,9 @@ class TextAnimation:
 
         self.animated_text.bind('<Enter>', lambda event: self._start_animation())
 
+    def get_label(self):
+        return self._text_label
+
     def _stop_animation(self):
         """
             -> Stop the animated text widget and set the text to start value (0px)
@@ -1080,22 +1109,28 @@ class CScrollWidget:
         self.background_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
         # Configure the Canvas
-        self.background_canvas.bind_all("<MouseWheel>", self._on_mousewheel)
         self.background_canvas.bind('<Configure>',
                                     lambda e:
                                     self.background_canvas.configure(scrollregion=self.background_canvas.bbox("all")))
 
         # Create another Frame inside the Canvas
         self.second_frame = tk.Frame(self.background_canvas, bg=bg, bd=-2)
+        self.second_frame.bind('<Enter>', lambda event: self.enter())
+        self.second_frame.bind('<Leave>', lambda event: self.leave())
 
         # Add the new Frame to a Window in the Canvas
-        self.background_canvas.create_window((0, 0), window=self.second_frame, anchor='nw')
+        self.background_canvas.create_window((0, 0), window=self.second_frame, anchor='nw', tags='self.frame')
+
+    def enter(self):
+        self.second_frame.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def leave(self):
+        self.second_frame.unbind_all("<MouseWheel>")
 
     def get_master_for_placing_objects(self):
         return self.second_frame
 
     def _on_mousewheel(self, event):
-        # print(int(-1*(event.delta/120)))
         self.background_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def place(self, x, y):
@@ -1129,14 +1164,26 @@ def main():
         """
         root = tk.Tk()
         root.title('ScrollWidget Text')
-        root.geometry('600x300')
+        root.geometry('800x300')
 
         widget = CScrollWidget(root, 400, 200, 'blue')
         widget.place(x=100, y=50)
 
         for thing in range(100):
-            tk.Button(widget.get_master_for_placing_objects(),
-                      text=f'Button {thing} Yo!').grid(row=thing, column=0, padx=10, pady=0)
+            button = tk.Button(widget.get_master_for_placing_objects(),
+                      text=f'Button {thing} Yo!')
+            button.grid(row=thing, column=0, padx=10, pady=0)
+            widget.bind_object(button)
+
+        widget1 = CScrollWidget(root, 500, 300, 'blue')
+        widget1.place(x=100, y=50)
+
+        for thing in range(100):
+            button = tk.Button(widget1.get_master_for_placing_objects(),
+                      text=f'Button {thing} Yo!')
+            button.grid(row=thing, column=0, padx=10, pady=10)
+
+        widget1.place(x=400, y=50)
 
         root.mainloop()
 
