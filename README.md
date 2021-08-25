@@ -114,7 +114,7 @@ tkinter Label mit Ecken je nach Wunsch?!?
     o Erstellt von Christof Haidegger
     o Debugging von Christof Haidegger
     
-    o Geschriebene Zeilen in Python-Code: 1195
+    o Geschriebene Zeilen in Python-Code: 1207
     o Geschriebene Zeilen in README-Code: 121
     
      
