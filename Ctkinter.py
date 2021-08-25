@@ -732,6 +732,18 @@ class CCanvas:
         self.Canvas.bind('<Enter>', lambda event: self._focus_true(gif_len, transparent, corner, size, pos, large,
                                                                    speed))
         self.Canvas.bind('<Leave>', lambda event: self._focus_false())
+    
+    def delete_gif(self):
+        if self.gif is not None:
+            self.gif.close()
+            self.image_counter = 0
+            self.gif = None
+            self.Canvas.unbind('<Enter>')
+            self.Canvas.unbind('<Leave>')
+        else:
+            print(colored('[Ctkinter: Warning: in Line: ' +
+                          str(get_line_number()) + '] Found no gif to delete on the canvas', 'yellow'))
+        
 
     def create_text(self, *args, **kwargs):
         """
