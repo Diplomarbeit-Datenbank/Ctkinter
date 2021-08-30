@@ -29,7 +29,6 @@ import time
 import math
 import cv2
 
-
 __author__ = 'Christof Haidegger'
 __date__ = '27.06.2021'
 __completed__ = '16.07.2021'
@@ -67,7 +66,13 @@ class Round_corners:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        
+        __init__ return always None -> params to set are self.canvas and self.image 
+                                    -> this params are set automatically 
+        
+        """
         self.canvas = None
         self.image = None
 
@@ -230,7 +235,6 @@ class CButton:
 
         self.params = {"background": bg, "CObject": self.CButton}
 
-
     def __getitem__(self, item):
         """
 
@@ -286,7 +290,7 @@ class CButton:
 
     def grid(self, row, column, pady, padx):
         """
-        
+
         :param row: 
         :param column: 
         :param pady: 
@@ -452,7 +456,9 @@ class CCanvas:
         :param outline:        when outline should be drawn (example: outline=('black', 1))
         """
 
+        self.last_size = tuple((0, 0))
         self._tk_image = None
+        self.image_path = None
         self._tk_image_list, self._canvas_image_list = list(), list()
         self.image_counter = 0
         self.gif = None
@@ -464,6 +470,8 @@ class CCanvas:
         self.max_rad = max_rad
 
         right_master = get_right_master(master)
+
+        self.master = right_master
 
         round_corn = Round_corners()
         round_corn.canvas = tk.Canvas(right_master, bg=master['background'], width=size[0] + 2, height=size[1] + 2,
@@ -589,6 +597,8 @@ class CCanvas:
                 image = cv2.imread(image_path)
             else:
                 image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+            self.image_path = image_path
+
         else:
             if transparent is False:
                 image = cv2.cvtColor(image_path, cv2.COLOR_RGB2BGR)
@@ -613,7 +623,7 @@ class CCanvas:
         pil_array = _Image.fromarray(rgb_image)
         self._tk_image = ImageTk.PhotoImage(image=pil_array)
         self._tk_image_list.append(self._tk_image)
-        
+
         try:
             self.Canvas.delete(self._canvas_image_list[len(self._canvas_image_list) - 1])
         except IndexError:
@@ -622,6 +632,42 @@ class CCanvas:
                                                 image=self._tk_image_list[len(self._tk_image_list) - 1])
         self._canvas_image_list.append(canvas_image)
         self.Canvas.image = self._tk_image_list[len(self._tk_image_list) - 1]
+
+    def configure_image_by_master_size(self):
+        if not self._tk_image_list:
+            # no image to resize with the master
+            print(colored('[Ctkinter: Warning: ' + str(type(self).warning_counter) + ' in Line: ' +
+                          str(
+                              get_line_number()) + '] You do not have a image on the canvas! Why are you calling this \n'
+                                                   'function are you a User and you do not really know what you are doing?'
+                                                   '\n'
+                                                   'This is not Playground go out of this code and leave your trash \n'
+                                                   'somewhere else! I was never so disapponted! Shame on you! \n',
+                          'red'))
+            type(self).warning_counter += 1
+            return
+
+        print(colored('[Ctkinter: Warning: ' + str(type(self).warning_counter) + ' in Line: ' +
+                      str(get_line_number()) + '] This Funktion is not really tested right now! It only works when the '
+                                               'image is stredged to the whol window (root or main_window) \n'
+                                               'You also had to be sure, that the root.update() function is run in \n'
+                                               'your code, before you are going to create the CCanvas for the image!',
+                      'blue'))
+
+        type(self).warning_counter += 1
+
+        self.master.bind('<Configure>', self._resize_image)
+
+    def _resize_image(self, event):
+        if self.last_size[0] == event.width and self.last_size[1] == event.height:
+            pass
+        else:
+            self.config(size=(event.width, event.height))
+            self.create_image(corner=self.corners, width=event.width, height=event.height,
+                              pos=(int(self.master.winfo_width() / 2), int(self.master.winfo_height() / 2)),
+                              image_path=self.image_path, read_from_path=True)
+
+        self.last_size = (event.width, event.height)
 
     def clear_image_list(self):
         """
@@ -642,7 +688,7 @@ class CCanvas:
             frame = self.gif.get_data(self.image_counter)
         except IndexError:
             print('Index Error occurent')
-            return 
+            return
         ret = True
         if ret is True:
             frame = cv2.resize(frame, size)
@@ -732,7 +778,7 @@ class CCanvas:
         self.Canvas.bind('<Enter>', lambda event: self._focus_true(gif_len, transparent, corner, size, pos, large,
                                                                    speed))
         self.Canvas.bind('<Leave>', lambda event: self._focus_false())
-    
+
     def delete_gif(self):
         if self.gif is not None:
             self.gif.close()
@@ -743,7 +789,6 @@ class CCanvas:
         else:
             print(colored('[Ctkinter: Warning: in Line: ' +
                           str(get_line_number()) + '] Found no gif to delete on the canvas', 'yellow'))
-        
 
     def create_text(self, *args, **kwargs):
         """
@@ -872,7 +917,7 @@ class CLabel:
             if variable_text is False:
                 if anchor == 'NW':
                     self.text_widget = self.CLabel.get_canvas().create_text(text_place[0], text_place[1], text=text,
-                                                               anchor=tk.NW, font=font, fill=fg)
+                                                                            anchor=tk.NW, font=font, fill=fg)
 
                 else:
                     self.text_widget = self.CLabel.get_canvas().create_text(int(size[0] / 2), int(size[1] / 2),
@@ -893,7 +938,7 @@ class CLabel:
         :param set_enter_hit: if a event raises when enter (return) is hit
         :return:              create the changeable text widget on the label
         """
-        
+
         if width is None:
             width = int((size[0] / 10) - 14)
 
@@ -916,7 +961,7 @@ class CLabel:
         """
         self.CLabel.get_canvas().focus_set()
         func(variable_text)
-    
+
     def insert(self, text):
         self.variable_text_widget.insert(tk.END, text)
 
@@ -985,9 +1030,10 @@ class CLabel:
         :return: destroy the CLabel and the background tkinter Canvas
         """
         self.CLabel.destroy()
-    
+
     def get(self):
         return self.variable_text_widget.get()
+
 
 class TextAnimation:
     """
@@ -1060,7 +1106,8 @@ class TextAnimation:
     def _run_text_animation(self):
         """
 
-        :param text_width: width of the text widget
+            -> start and run the text Animation
+
         """
         self._change_x_position(self.text_width)
         if -1 * self.text_pos_x >= self.animation_len_in_px:
@@ -1072,12 +1119,13 @@ class TextAnimation:
     def _start_animation(self):
         """
 
-        :param text_width: width of the text widget
+            -> start and bind start the Text Animation
+
         """
         self.run = True
         self.animated_text.unbind('<Enter>')
         self.animated_text.after(15, lambda: self._run_text_animation())
-    
+
     def manual_start(self):
         self.run = False
         self.text_pos_x = 10
@@ -1093,11 +1141,11 @@ class TextAnimation:
             self.text_pos_x -= 1
         else:
             self.text_pos_x = self.size[0]
-    
+
     def change_text(self, text):
         if self.text_space is None:
-            self.text = text + int(size[0] / 5.6) * ' ' + text
-            one_text = text + int(size[0] / 5.6) * ' '
+            self.text = text + int(self.size[0] / 5.6) * ' ' + text
+            one_text = text + int(self.size[0] / 5.6) * ' '
         else:
             self.text = text + int(self.text_space) * ' ' + text
             one_text = text + int(self.text_space) * ' '
@@ -1109,7 +1157,6 @@ class TextAnimation:
         self._text_label.config(text=self.text)
         self._text_label.update()
         self.text_width = self._text_label.winfo_width()
-
 
 
 class CScrollWidget:
@@ -1183,7 +1230,7 @@ def main():
 
         for thing in range(100):
             button = tk.Button(widget.get_master_for_placing_objects(),
-                      text=f'Button {thing} Yo!')
+                               text=f'Button {thing} Yo!')
             button.grid(row=thing, column=0, padx=10, pady=0)
             widget.bind_object(button)
 
@@ -1192,7 +1239,7 @@ def main():
 
         for thing in range(100):
             button = tk.Button(widget1.get_master_for_placing_objects(),
-                      text=f'Button {thing} Yo!')
+                               text=f'Button {thing} Yo!')
             button.grid(row=thing, column=0, padx=10, pady=10)
 
         widget1.place(x=400, y=50)
