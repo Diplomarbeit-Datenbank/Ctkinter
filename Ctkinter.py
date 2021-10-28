@@ -68,10 +68,10 @@ class Round_corners:
 
     def __init__(self) -> None:
         """
-        
-        __init__ return always None -> params to set are self.canvas and self.image 
-                                    -> this params are set automatically 
-        
+
+        __init__ return always None -> params to set are self.canvas and self.image
+                                    -> this params are set automatically
+
         """
         self.canvas = None
         self.image = None
@@ -121,7 +121,8 @@ class Round_corners:
 
         self.image = cv2.cvtColor(cv2.resize(self.image.copy(), (width, height)), cv2.COLOR_BGR2BGRA)
 
-        ret_image = np.zeros((width, height, 4), dtype=np.uint8)
+        # ret_image = np.zeros((width, height, 4), dtype=np.uint8)
+        ret_image = np.zeros_like(self.image)
 
         diag = int(math.sqrt(width ** 2 + height ** 2))
         to_add = ((diag / 2 - width / 2) / 2)
@@ -208,6 +209,7 @@ class CButton:
         self.color_conf_list = list()
         self.change_color = highlight_color
         self.pressing_color = pressing_color
+        self.outline = outline
 
         '# create rounded corners'
         polygon = Round_corners()
@@ -242,6 +244,19 @@ class CButton:
         :return: the item value
         """
         return self.params[item]
+
+    def rise(self):
+        self.CButton.tag_raise(self.polygon)
+
+    def lower(self):
+        self.CButton.tag_lower(self.polygon)
+
+    def change_outline_by_focus(self, new_color):
+        self.CButton.bind("<Enter>", lambda event: self._change_outline(new_color))
+        self.CButton.bind("<Leave>", lambda event: self._change_outline(self.outline[0]))
+
+    def _change_outline(self, color):
+        self.CButton.itemconfig(self.polygon, outline=color)
 
     def set_button_atributes(self, handler, item, set_command=True):
         """
@@ -291,11 +306,11 @@ class CButton:
     def grid(self, row, column, pady, padx):
         """
 
-        :param row: 
-        :param column: 
-        :param pady: 
-        :param padx: 
-        :return: 
+        :param row:
+        :param column:
+        :param pady:
+        :param padx:
+        :return:
         """
         self.CButton.grid(row=row, column=column, pady=pady, padx=padx)
 
@@ -456,6 +471,7 @@ class CCanvas:
         :param outline:        when outline should be drawn (example: outline=('black', 1))
         """
 
+        self.old_relation = None
         self.last_size = tuple((0, 0))
         self._tk_image = None
         self.image_path = None
@@ -468,6 +484,9 @@ class CCanvas:
         self.size = size
         self.outline_color = outline
         self.max_rad = max_rad
+
+        self.x_place = None
+        self.y_place = None
 
         right_master = get_right_master(master)
 
@@ -485,6 +504,72 @@ class CCanvas:
     def get_all_items(self):
         print(self.Canvas.find_all())
 
+        return self.Canvas.find_all()
+
+    def rise(self):
+        self.Canvas.tag_raise(self.outline)
+
+    def winfo_height(self):
+        return self.Canvas.winfo_height()
+
+    def lower(self):
+        self.Canvas.tag_lower(self.outline)
+
+    def lift(self, item):
+        self.Canvas.lift(item)
+
+    def config_item_by_master_size(self, root, items=None):
+        if self.master.winfo_width() == 1:
+            print('Note to run the update function of the master bevore calling this function!!')
+        print(self.x_place, self.y_place)
+        if self.x_place is None or self.y_place is None:
+            print('This function is only available, if all objects and the canvas it self are placed with the place '
+                  'function')
+
+        # calc the realation of the items on the canvas like example: 800:600=200:180 -> 800:500=200:x -> ges: x
+        ''' This relation (self.old_relation) is only for the size of the canvas and not for the place
+            (The place commes later) we first had to resize the object and that had to be fast (almost no latency)'''
+        self.old_relation = (root.winfo_width(), root.winfo_height(), self.size[0], self.size[1])
+
+        print(self.old_relation)
+
+        root.bind('<Configure>', self._new_item_size)
+
+    def _new_item_size(self, event):
+        width_div = self.old_relation[0] - event.width
+        height_div = self.old_relation[1] - event.height
+        # self.old_relation[2] = event.width
+        # self.old_relation[3] = event.height
+
+        new_width =  -1 * width_div + self.old_relation[2]
+        new_height = -1 * height_div + self.old_relation[3]
+        print('new_size=', new_height, new_width)
+        # self.config(size=(new_width, new_height, True))
+        self.Canvas.config(width=int(new_width), height=int(new_height))
+
+
+    def _new_item_size_old(self, event):
+        new_size = [self.old_relation[2], self.old_relation[3]]
+
+        if self.old_relation[0] != event.width and self.old_relation[1] == event.height:
+            self.old_relation[0] == event.width
+
+            new_size[0] = int((self.old_relation[3] * event.width) / self.old_relation[1])
+            print('widht=', event.width)
+            self.config(size=(new_size[0], new_size[1]))
+            print(new_size)
+
+        elif self.old_relation[1] != event.height and self.old_relation[0] == event.width:
+            self.old_relation[1] == event.height
+
+            new_size[1] = int((self.old_relation[2] * event.height) / self.old_relation[0])
+            print('height=', event.height)
+            self.config(size=(new_size[0], new_size[1]))
+            print(new_size)
+
+        else:
+            print('both are resized')
+
     def __getitem__(self, item):
         """
 
@@ -496,6 +581,9 @@ class CCanvas:
     def after(self, *args, **kwargs):
         self.Canvas.after(*args, **kwargs)
 
+    def place_configure(self, *args, **kwargs):
+        self.Canvas.place_configure(*args, **kwargs)
+
     def config(self, **kwargs):
         """
             THIS FUNCTION IS NOT GREAT AT ALL! It does not work well because by changing the background the other items
@@ -504,14 +592,16 @@ class CCanvas:
         :return:
         """
         if list(kwargs.keys())[0] == 'size':
-            print(colored('[Ctkinter: Warning: ' + str(type(self).warning_counter) + ' in Line: ' +
-                          str(get_line_number()) + ']' ' by changing the size, the '
-                                                   'background color must be renewed', 'yellow'))
+            if len(kwargs.get('size')) == 3:
+                if kwargs.get('size')[2] is not True:
+                    print(colored('[Ctkinter: Warning: ' + str(type(self).warning_counter) + ' in Line: ' +
+                                  str(get_line_number()) + ']' ' by changing the size, the '
+                                                           'background color must be renewed', 'yellow'))
             type(self).warning_counter += 1
             self.size = (kwargs.get('size')[0], kwargs.get('size')[1])
             self.Canvas.config(width=int(kwargs.get('size')[0]), height=int(kwargs.get('size')[1]))
-            self.Canvas.delete(self.outline)
-            self._change_background(self.bg)
+            # self.Canvas.delete(self.outline)
+            # self._change_background(self.bg)
 
         if list(kwargs.keys())[0] == 'bg':
             self._change_background(kwargs.get('bg'))
@@ -549,6 +639,13 @@ class CCanvas:
         """
         return self.Canvas.winfo_id()
 
+    def winfo_width(self):
+        """
+
+        :return: -> actually widht of the canvas
+        """
+        return self.Canvas.winfo_width()
+
     def place(self, x, y):
         """
 
@@ -556,6 +653,8 @@ class CCanvas:
         :param y: y position
         :           -> place the canvas on the given x and y position
         """
+        self.x_place = x
+        self.y_place = y
         self.Canvas.place(x=x, y=y)
 
     def pack(self, *args, **kwargs):
@@ -624,14 +723,21 @@ class CCanvas:
         self._tk_image = ImageTk.PhotoImage(image=pil_array)
         self._tk_image_list.append(self._tk_image)
 
+        canvas_image = self.Canvas.create_image((pos[0], pos[1]),
+                                                image=self._tk_image_list[len(self._tk_image_list) - 1])
+
         try:
             self.Canvas.delete(self._canvas_image_list[len(self._canvas_image_list) - 1])
         except IndexError:
             pass
-        canvas_image = self.Canvas.create_image((pos[0], pos[1]),
-                                                image=self._tk_image_list[len(self._tk_image_list) - 1])
+
         self._canvas_image_list.append(canvas_image)
         self.Canvas.image = self._tk_image_list[len(self._tk_image_list) - 1]
+
+        return canvas_image
+
+    def tag_raise(self, item_id):
+        self.Canvas.lift(item_id)
 
     def configure_image_by_master_size(self):
         if not self._tk_image_list:
@@ -676,7 +782,7 @@ class CCanvas:
         """
         self._tk_image_list = list()
 
-    def _run_animation(self, gif_len, transparent, corner, size, pos, large=False):
+    def _run_animation(self, gif_len, transparent, corner, size, pos, mp4, large=False):
         """
 
         :param corner: could be round, rounded or angular
@@ -684,14 +790,22 @@ class CCanvas:
         :param pos:    position of the image
         :                 -> run the animation
         """
+        if mp4 is True:
+            transparent = False
         try:
-            frame = self.gif.get_data(self.image_counter)
+            if mp4 is False:
+                frame = self.gif.get_data(self.image_counter)
+                ret = True
+            else:
+                ret, frame = self.gif.read()
         except IndexError:
             print('Index Error occurent')
             return
-        ret = True
+
         if ret is True:
             frame = cv2.resize(frame, size)
+            if mp4 is True:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             self.create_image(corner, size[0], size[1], pos, frame, transparent=transparent,
                               read_from_path=False)
             self.image_counter += 1
@@ -702,7 +816,7 @@ class CCanvas:
             if large is True:
                 self.clear_image_list()
 
-    def _start_animation(self, gif_len, transparent, corner, size, pos, large, speed):
+    def _start_animation(self, gif_len, transparent, corner, size, pos, large, speed, mp4):
         """
 
         :param corner: could be round, rounded or angular
@@ -712,7 +826,7 @@ class CCanvas:
         """
         while self.focus is True:
             try:
-                self._run_animation(gif_len, transparent, corner, size, pos, large)
+                self._run_animation(gif_len, transparent, corner, size, pos, mp4, large)
             except _tkinter.TclError:
                 print(colored('[Ctkinter: Error: ' + str(type(self).warning_counter) + ' in Line: ' +
                               str(get_line_number()) +
@@ -733,7 +847,7 @@ class CCanvas:
         """
         self.focus = False
 
-    def _focus_true(self, gif_len, transparent, corner, size, pos, large, speed):
+    def _focus_true(self, gif_len, transparent, corner, size, pos, large, speed, mp4):
         """
 
         :param corner: could be round, rounded or angular
@@ -742,10 +856,11 @@ class CCanvas:
         :                   -> canvas in focus -> run the gif animation
         """
         self.focus = True
-        threading.Thread(target=self._start_animation, args=(gif_len, transparent, corner, size, pos, large, speed
+        threading.Thread(target=self._start_animation, args=(gif_len, transparent, corner, size, pos, large, speed, mp4,
                                                              )).start()
 
-    def create_gif(self, gif_path, corner, size, pos, transparent=False, set_half_gif_time=False, speed='normal'):
+    def create_gif(self, gif_path, corner, size, pos, transparent=False, set_half_gif_time=False, mp4=False,
+                   speed='slow'):
         """
 
         :param speed:
@@ -761,22 +876,35 @@ class CCanvas:
             self.gif.close()
             self.image_counter = 0
         try:
-            self.gif = imageio.get_reader(gif_path)
+            if mp4 is False:
+                self.gif = imageio.get_reader(gif_path)
         except FileNotFoundError:
             raise FileNotFoundError('Gif does not exist, PATH: ', gif_path)
         gif_data = cv2.VideoCapture(gif_path)
-        gif_len = gif_data.get(7)
-        gif_data.release()
+
         large = False
-        if self.gif.get_length() > 300:
+
+        if mp4 is True:
+            self.gif = gif_data
             large = True
 
-        if set_half_gif_time is True:
-            self.image_counter = int(self.gif.get_length() / 2)
+        gif_len = gif_data.get(7)
 
-        self._run_animation(gif_len, transparent, corner, size, pos, large)
+        if mp4 is False:
+            gif_data.release()
+            if self.gif.get_length() > 300:
+                large = True
+
+        if set_half_gif_time is True:
+            if mp4 is False:
+                self.image_counter = int(self.gif.get_length() / 2)
+            else:
+                self.image_counter = int(self.gif.get(7) / 2)
+                self.gif.set(1, self.image_counter)
+
+        self._run_animation(gif_len, transparent, corner, size, pos, mp4, large)
         self.Canvas.bind('<Enter>', lambda event: self._focus_true(gif_len, transparent, corner, size, pos, large,
-                                                                   speed))
+                                                                   speed, mp4))
         self.Canvas.bind('<Leave>', lambda event: self._focus_false())
 
     def delete_gif(self):
@@ -1114,7 +1242,7 @@ class TextAnimation:
             self._stop_animation()
 
         if self.run is True:
-            self.animated_text.after(15, lambda: self._run_text_animation())
+            self.animated_text.after(17, lambda: self._run_text_animation())
 
     def _start_animation(self):
         """
@@ -1160,7 +1288,18 @@ class TextAnimation:
 
 
 class CScrollWidget:
+    """
+        This class is to create horizontal scrollwidgets
+
+    """
     def __init__(self, master, width, height, bg):
+        """
+
+        :param master: the master where the widget should be placed
+        :param width:  width of the widget which is shown on screen
+        :param height: height of the widget which is shown on screen
+        :param bg:     background of the widget which is shown on screen
+        """
         self.ScrollWidget = tk.Frame(master=master, bg=bg, bd=-2)
 
         # create a Canvas
@@ -1181,19 +1320,101 @@ class CScrollWidget:
         self.background_canvas.create_window((0, 0), window=self.second_frame, anchor='nw', tags='self.frame')
 
     def enter(self):
+        """Function run when you enter the widget with the mouse
+        """
         self.second_frame.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def leave(self):
+        """Function run when you leave the widget with the mouse
+        """
         self.second_frame.unbind_all("<MouseWheel>")
 
     def get_master_for_placing_objects(self):
+        """
+
+        :return: The master where the objects should be placed
+        """
         return self.second_frame
 
     def _on_mousewheel(self, event):
+        """
+
+        :param event: this event give the mouse movement back
+        :return: None
+        """
         self.background_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def place(self, x, y):
+        """
+
+        :param x: x to place the object on the scrollbar
+        :param y: y to place the object on the scrollbar
+        """
         self.ScrollWidget.place(x=x, y=y)
+
+
+class SideBar:
+    def __init__(self, master, bg, width, height, corners, max_rad, image_path=None):
+        self.width = width
+        self.height = height
+        self.background_canvas = CCanvas(master=master, bg=master['background'], size=(width + 50, height + 2),
+                                         corners='rounded')
+        self.SideBar = CCanvas(master=self.background_canvas, bg=bg, size=(width, height + 2), corners=corners,
+                               max_rad=max_rad)
+
+        # side_bar_image
+        if image_path is not None:
+            back_im_path = image_path
+
+            side_bar_image_canvas = CCanvas(master=self.background_canvas, bg=self.background_canvas['background'],
+                                            size=(50, height), corners='angular')
+
+            if back_im_path is not None:
+                side_bar_image_canvas.create_image(corner='angular', width=50, height=50, pos=(26, 26),
+                                               image_path=back_im_path, transparent=True)
+            side_bar_image_canvas.place(x=width, y=0)
+
+        self.background_canvas.bind("<Enter>", lambda event: self.on_focus())
+        self.background_canvas.bind("<Leave>", lambda event: self.out_focus(width=width))
+        self.SideBar.place(x=0, y=0)
+
+    def place(self):
+        self.background_canvas.place(x=int(-1 * self.width), y=-2)
+        tk.Misc.lift(self.background_canvas.get_canvas())
+
+    def on_focus(self):
+        self.background_canvas.config(size=(self.width, self.height))
+        self.background_canvas.place_configure(x=0)
+        tk.Misc.lift(self.background_canvas.get_canvas())
+
+    def out_focus(self, width):
+        self.background_canvas.config(size=(self.width + 50, self.height))
+        self.background_canvas.place_configure(x=int(-1 * width))
+        tk.Misc.lower(self.background_canvas.get_canvas())
+
+    def get_canvas(self):
+        return self.SideBar
+
+
+class CBottomPanel:
+    def __init__(self, master, size_list=(), x_place_list=(), y_place_list=(), bg_list=()):
+        self.master = master
+        self.y_place_list = y_place_list
+        self.panel_list = list()
+        self.size_list = size_list
+
+        for size, x_place, bg in zip(size_list, x_place_list, bg_list):
+            panel = CCanvas(master=master, bg=bg, size=size, corners='rounded', max_rad=40)
+            self.panel_list.append(panel)
+            panel.place(x=x_place, y=self.master.winfo_height() + 10)
+
+    def rise(self, id):
+        self.panel_list[id].place_configure(y=self.y_place_list[id])
+        tk.Misc.lift(self.panel_list[id].get_canvas())
+
+    def low(self, id):
+        self.panel_list[id].place_configure(y=self.master.winfo_height() + 10)
+
 
 
 def main():
@@ -1232,7 +1453,7 @@ def main():
             button = tk.Button(widget.get_master_for_placing_objects(),
                                text=f'Button {thing} Yo!')
             button.grid(row=thing, column=0, padx=10, pady=0)
-            widget.bind_object(button)
+            # widget.bind_object(button)
 
         widget1 = CScrollWidget(root, 500, 300, 'blue')
         widget1.place(x=100, y=50)
@@ -1246,7 +1467,7 @@ def main():
 
         root.mainloop()
 
-    test2()
+    test1()
 
 
 if __name__ == '__main__':
