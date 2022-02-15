@@ -29,6 +29,19 @@ import time
 import math
 import cv2
 
+try:
+    import play_music
+except ModuleNotFoundError:
+    # playmusic is a module which contain the following function:
+    """
+    def play_sound(file_path):
+        if mixer.music.get_busy() == 0:
+            sound = mixer.sound(file_path)
+            sound.play()
+    """
+
+    print(colored('[Ctkinter: Warning 1 in Line: 35]: No sounds available (no module play_music)', 'yellow'))
+
 __author__ = 'Christof Haidegger'
 __date__ = '27.06.2021'
 __completed__ = '16.07.2021'
@@ -88,7 +101,7 @@ class Round_corners:
         :param c:       type of corner of the button
         :               -> create corners of the button
         """
-        assert c == "round" or c == "rounded" or c == "angular" or None, "c must be round or rounded"
+        assert c == "round" or c == "rounded" or c == "angular" or c is None, "c must be round or rounded"
         step = height * 2
         if c == "rounded":
             c = int(height / 3)
@@ -468,10 +481,13 @@ class CCanvas:
         :param bg:             background of the Canvas
         :param size:           size of the Canvas (size[0] = width, size[1] = height)
         :param corners:        could be round, rounded or angular
+        :param max_rad:        if None: the maximal possible rad will be used, else the max_rad is a given int
         :param outline:        when outline should be drawn (example: outline=('black', 1))
+        :param dash:           when the outline should be dashed take this param (example: dash=2)
         """
 
         self.old_relation = None
+        self.preview_image_list = None
         self.last_size = tuple((0, 0))
         self._tk_image = None
         self.image_path = None
@@ -704,12 +720,6 @@ class CCanvas:
             else:
                 image = cv2.cvtColor(image_path, cv2.COLOR_RGB2BGRA)
 
-        """
-        if transparent is True and corner != 'angular':
-            raise Exception('gif animation or images with transparent background could not be rounded or round -> '
-                            'use angular')
-        """
-
         if corner != "angular":
             round_corn = Round_corners()
             round_corn.image = image
@@ -722,7 +732,6 @@ class CCanvas:
         pil_array = _Image.fromarray(rgb_image)
         self._tk_image = ImageTk.PhotoImage(image=pil_array)
         self._tk_image_list.append(self._tk_image)
-
         canvas_image = self.Canvas.create_image((pos[0], pos[1]),
                                                 image=self._tk_image_list[len(self._tk_image_list) - 1])
 
@@ -732,7 +741,11 @@ class CCanvas:
             pass
 
         self._canvas_image_list.append(canvas_image)
-        self.Canvas.image = self._tk_image_list[len(self._tk_image_list) - 1]
+        try:
+            self.Canvas.image = self._tk_image_list[len(self._tk_image_list) - 1]
+        except IndexError:
+            # this happen if someone is a depp and went with the mouse very fast over the gif 
+            pass
 
         return canvas_image
 
@@ -926,6 +939,54 @@ class CCanvas:
         :                   -> create text on canvas
         """
         self.Canvas.create_text(*args, **kwargs)
+
+    def _run_preview(self, size, corner, pos, transparent, image_counter):
+        image = self.preview_image_list[image_counter]
+        frame = cv2.resize(image, size)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        self.create_image(corner, size[0], size[1], pos, frame, transparent=transparent, read_from_path=False)
+
+    def _start_preview(self, size, corner, pos ,transparent, speed):
+        counter = 0
+        while self.focus is True:
+            counter+=1
+            if counter >= len(self.preview_image_list):
+                self.clear_image_list()
+                counter = 0
+            self._run_preview(size, corner, pos, transparent, counter)
+            if speed == 'fast':
+                time.sleep(0.04)
+            if speed == 'normal':
+                time.sleep(0.06)
+            if speed == 'slow':
+                time.sleep(0.08)
+
+
+    def _preview_focus(self, size, corner, pos, transparent, speed):
+        self.focus = True
+        threading.Thread(target=self._start_preview, args=(size, corner, pos ,transparent, speed)).start()
+
+    def _preview_focus_out(self):
+        self.focus = False
+
+    def show_preview_image_animation(self, image_list, size, pos, corner='angular', transparent=False, speed='slow'):
+        """
+
+        :param image_list: list of images (numpy array with images)
+        :param size: size of the images
+        :param pos:  position of the images on the CCanvas
+        :param corner:  corner of the images (round, rounded or angular)
+        :param transparent: if a alpha channel on the images is available set this to true
+        :param speed:  available is slow, normal and fast
+        :return: None
+        """
+        self.preview_image_list = image_list
+
+        self._run_preview(size, corner, pos, transparent, 0)
+
+        self.Canvas.bind('<Enter>', lambda event: self._preview_focus(size, corner, pos, transparent, speed))
+        self.Canvas.bind('<Leave>', lambda event: self._preview_focus_out())
+
 
     def create_line(self, *args, **kwargs):
         """
@@ -1312,7 +1373,7 @@ class CScrollWidget:
                                     self.background_canvas.configure(scrollregion=self.background_canvas.bbox("all")))
 
         # Create another Frame inside the Canvas
-        self.second_frame = tk.Frame(self.background_canvas, bg=bg, bd=-2)
+        self.second_frame = tk.Frame(self.background_canvas, bg=bg, bd=3)
         self.second_frame.bind('<Enter>', lambda event: self.enter())
         self.second_frame.bind('<Leave>', lambda event: self.leave())
 
@@ -1352,11 +1413,15 @@ class CScrollWidget:
         """
         self.ScrollWidget.place(x=x, y=y)
 
+    def destroy(self):
+        self.ScrollWidget.destroy()
+
 
 class SideBar:
-    def __init__(self, master, bg, width, height, corners, max_rad, image_path=None):
+    def __init__(self, master, bg, width, height, corners, max_rad, image_path=None, sound=None):
         self.width = width
         self.height = height
+        self.sound=sound
         self.background_canvas = CCanvas(master=master, bg=master['background'], size=(width + 50, height + 2),
                                          corners='rounded')
         self.SideBar = CCanvas(master=self.background_canvas, bg=bg, size=(width, height + 2), corners=corners,
@@ -1383,6 +1448,8 @@ class SideBar:
         tk.Misc.lift(self.background_canvas.get_canvas())
 
     def on_focus(self):
+        if self.sound is not None:
+            play_music.play_sound(file_path=self.sound)
         self.background_canvas.config(size=(self.width, self.height))
         self.background_canvas.place_configure(x=0)
         tk.Misc.lift(self.background_canvas.get_canvas())
@@ -1397,11 +1464,12 @@ class SideBar:
 
 
 class CBottomPanel:
-    def __init__(self, master, size_list=(), x_place_list=(), y_place_list=(), bg_list=()):
+    def __init__(self, master, size_list=(), x_place_list=(), y_place_list=(), bg_list=(), sound=None):
         self.master = master
         self.y_place_list = y_place_list
         self.panel_list = list()
         self.size_list = size_list
+        self.sound = sound
 
         for size, x_place, bg in zip(size_list, x_place_list, bg_list):
             panel = CCanvas(master=master, bg=bg, size=size, corners='rounded', max_rad=40)
@@ -1409,6 +1477,7 @@ class CBottomPanel:
             panel.place(x=x_place, y=self.master.winfo_height() + 10)
 
     def rise(self, id):
+        play_music.play_sound(self.sound)
         self.panel_list[id].place_configure(y=self.y_place_list[id])
         tk.Misc.lift(self.panel_list[id].get_canvas())
 
@@ -1453,21 +1522,20 @@ def main():
             button = tk.Button(widget.get_master_for_placing_objects(),
                                text=f'Button {thing} Yo!')
             button.grid(row=thing, column=0, padx=10, pady=0)
-            # widget.bind_object(button)
 
         widget1 = CScrollWidget(root, 500, 300, 'blue')
-        widget1.place(x=100, y=50)
+        widget1.place(x=400, y=50)
 
         for thing in range(100):
             button = tk.Button(widget1.get_master_for_placing_objects(),
                                text=f'Button {thing} Yo!')
             button.grid(row=thing, column=0, padx=10, pady=10)
 
-        widget1.place(x=400, y=50)
+        # widget1.place(x=400, y=50)
 
         root.mainloop()
 
-    test1()
+    test2()
 
 
 if __name__ == '__main__':
