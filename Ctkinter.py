@@ -25,6 +25,7 @@ import _tkinter
 import numpy as np
 import threading
 import imageio
+import ctypes
 import time
 import math
 import cv2
@@ -34,6 +35,8 @@ try:
 except ModuleNotFoundError:
     # playmusic is a module which contain the following function:
     """
+    from pygame import mixer
+    
     def play_sound(file_path):
         if mixer.music.get_busy() == 0:
             sound = mixer.sound(file_path)
@@ -46,8 +49,26 @@ __author__ = 'Christof Haidegger'
 __date__ = '27.06.2021'
 __completed__ = '16.07.2021'
 __work_time__ = 'about 15 Hours'
-__version__ = 'BETA VERSION 1.8 -> There may be some unknown issues left -> BETA VERSION 1.6 -> first stable version'
+__version__ = 'BETA VERSION 2.3 -> There may be some unknown issues left -> BETA VERSION 1.8 -> first stable version'
 __licence__ = 'opensource(common licenced)'
+
+class Size_Config:
+    def __init__(self, master):
+        self.master = master
+        self.width = self.master.winfo_width()
+        self.height = self.master.winfo_height()
+
+        self.master.after(100, self.config_interface_by_master_size)
+
+    def config_interface_by_master_size(self):
+        width = self.master.winfo_width()
+        height = self.master.winfo_height()
+        time.sleep(2)
+
+        if (self.width != width or self.height != height):
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+
+        self.master.after(100, self.config_interface_by_master_size)
 
 
 def get_right_master(master):
@@ -119,8 +140,8 @@ class Round_corners:
                   width, height - c, width, height - c, width, height, width - c, height, width - c, height,
                   2 + c, height, 2 + c, height, 2, height, 2, height - c, 2, height - c, 2, 2 + c, 2, 2 + c, 2, 2]
 
-        return self.canvas.create_polygon(points, fill=bg, smooth=True, outline=outline[0], width=outline[1],
-                                          splinesteps=step, dash=dash)
+        return self.canvas.create_polygon(points, fill=bg, smooth=1, outline=outline[0], width=outline[1],
+                                          splinesteps=step, dash=dash, joinstyle='round')
 
     def rounded_corners_image(self, width, height, c):
         """
@@ -146,13 +167,23 @@ class Round_corners:
                                    int(to_add * 4))
 
         if c == "round":
-            radius = (int(height / 2) + int((diag - (height / 2)) / 2) + int(to_add / 2) - 2) - 5
+            radius = (int(height / 2) + int((diag - (height / 2)) / 2) + int(to_add / 2) - 2) - 6
             ret_image = cv2.circle(ret_image, (int(width / 2), int(height / 2)),
-                                   radius, (255, 255, 255, 255), int(diag - (height / 2)))
+                                   radius, (255, 255, 255, 255), int(diag - (height / 2)), cv2.LINE_AA)
 
         ret_image = cv2.bitwise_not(ret_image)
-        ret_image[np.where(ret_image == 255)] = self.image[np.where(ret_image == 255)]
+        # cv2.imshow('ret image', ret_image)
+        # cv2.waitKey(0)
+        # ret_image = cv2.bitwise_and(self.image, self.image, mask=cv2.cvtColor(ret_image, cv2.COLOR_RGBA2GRAY))
+        ret_image = self.image.copy() & ret_image
+        #ret_image[np.where(ret_image > 20)] = self.image[np.where(ret_image > 20)]
 
+        # ret_image[np.where(ret_image == 255)] = self.image[np.where(ret_image == 255)]
+
+        # mask black:
+        # kernel = np.ones((-2, -2), np.uint8)
+
+        # ret_image = cv2.erode(ret_image, kernel)
         return ret_image
 
     def return_canvas(self):
@@ -487,6 +518,7 @@ class CCanvas:
         """
 
         self.old_relation = None
+        self.delete_command = None
         self.preview_image_list = None
         self.last_size = tuple((0, 0))
         self._tk_image = None
@@ -521,6 +553,9 @@ class CCanvas:
         print(self.Canvas.find_all())
 
         return self.Canvas.find_all()
+
+    def run_delete_command(self, command):
+        self.delete_command = command
 
     def rise(self):
         self.Canvas.tag_raise(self.outline)
@@ -1054,6 +1089,8 @@ class CCanvas:
 
         -> destroy the Canvas
         """
+        if self.delete_command is not None:
+            self.delete_command()
         self.Canvas.destroy()
 
     def change_outline(self, new_outline):
