@@ -107,7 +107,7 @@ tkinter Label mit Ecken je nach Wunsch?!?
                 c.get_canvas().destroy()
 
 # Entwickler Verwendung:
-    -> Um einen Eingblick in die Library und ihre vielseitigen Funktionen zu erhalten einfach die obigen Testprogramme ausführen
+    -> Um einen Einblick in die Library und ihre vielseitigen Funktionen zu erhalten einfach die obigen Testprogramme ausführen
     
 # Eigenschaften:
     o Copyright von Christof Haidegger
