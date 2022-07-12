@@ -1015,6 +1015,7 @@ class CCanvas:
         :param speed:  available is slow, normal and fast
         :return: None
         """
+
         self.preview_image_list = image_list
 
         self._run_preview(size, corner, pos, transparent, 0)
