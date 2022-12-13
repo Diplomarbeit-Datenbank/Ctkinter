@@ -42,8 +42,8 @@ except ModuleNotFoundError:
             sound = mixer.sound(file_path)
             sound.play()
     """
-
-    print(colored('[Ctkinter: Warning 1 in Line: 35]: No sounds available (no module play_music)', 'yellow'))
+    pass
+    # print(colored('[Ctkinter: Warning 1 in Line: 35]: No sounds available (no module play_music)', 'yellow'))
 
 __author__ = 'Christof Haidegger'
 __date__ = '27.06.2021'
@@ -152,8 +152,8 @@ class Round_corners:
         :return:                    -> the new image with the rounded corners
         """
         assert c == "round" or c == "rounded" or c is None, "c must be round, rounded or angular"
-
         self.image = cv2.cvtColor(cv2.resize(self.image.copy(), (width, height)), cv2.COLOR_BGR2BGRA)
+
 
         # ret_image = np.zeros((width, height, 4), dtype=np.uint8)
         ret_image = np.zeros_like(self.image)
@@ -338,14 +338,14 @@ class CButton:
         """
         self.CButton.pack(*args, **kwargs)
 
-    def place(self, x=None, y=None):
+    def place(self, x=None, y=None, **kwargs):
         """
 
         :param x: x position to place
         :param y: y position to place
         :           -> place the Button on the Interface
         """
-        self.CButton.place(x=x, y=y)
+        self.CButton.place(x=x, y=y, **kwargs)
 
     def grid(self, row, column, pady, padx):
         """
@@ -697,7 +697,7 @@ class CCanvas:
         """
         return self.Canvas.winfo_width()
 
-    def place(self, x, y):
+    def place(self, x, y, **kwargs):
         """
 
         :param x: x position
@@ -706,7 +706,7 @@ class CCanvas:
         """
         self.x_place = x
         self.y_place = y
-        self.Canvas.place(x=x, y=y)
+        self.Canvas.place(x=x, y=y, **kwargs)
 
     def pack(self, *args, **kwargs):
         """
@@ -1233,14 +1233,14 @@ class CLabel:
 
         return text_len
 
-    def place(self, x, y):
+    def place(self, x, y, **kwargs):
         """
 
         :param x: x coordinate to place
         :param y: y coordinate to place
         :             -> the CLabel will be placed on the given x and y coordinates
         """
-        self.CLabel.place(x=x, y=y)
+        self.CLabel.place(x=x, y=y, **kwargs)
 
     def pack(self, *args, **kwargs):
         """
@@ -1443,13 +1443,13 @@ class CScrollWidget:
         """
         self.background_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    def place(self, x, y):
+    def place(self, x, y, **kwargs):
         """
 
         :param x: x to place the object on the scrollbar
         :param y: y to place the object on the scrollbar
         """
-        self.ScrollWidget.place(x=x, y=y)
+        self.ScrollWidget.place(x=x, y=y, **kwargs)
 
     def destroy(self):
         self.ScrollWidget.destroy()
@@ -1578,3 +1578,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
