@@ -211,7 +211,7 @@ class CButton:
 
     def __init__(self, master, bg='black', highlight_color='white', pressing_color='white', width=40, height=10,
                  text=None, font=('Sans', 12), fg='black', courser="hand2", outline=('', 1), rounded_corners='angular',
-                 image=None, command=None, max_rad=None, dash=None):
+                 image=None, command=None, max_rad=None, dash=None, function_first=False):
         """
 
         :param master:          master (object, where the button should be placed)
@@ -245,6 +245,7 @@ class CButton:
             bg = master['background']
             self.change_to_highlight_color = True
 
+        self.function_first = False
         self.bg = bg
         self.command = command
         self.width = width
@@ -423,6 +424,8 @@ class CButton:
 
         : when function is finished, go back to self.bg color
         """
+        if self.function_first:
+            func()
         self.CButton.itemconfig(self.polygon, fill=self.change_color)
         for handler, item in self.color_conf_list:
             if item is not None:
@@ -432,8 +435,8 @@ class CButton:
         # vlt fia die Katz bitte nachschauen
         if self.image is not None:
             self._set_image(self.image[0], self.image[1], self.image[2], self.image[3])
-
-        func()
+        if not self.function_first:
+            func()
 
     def _set_command(self, func):
         """
